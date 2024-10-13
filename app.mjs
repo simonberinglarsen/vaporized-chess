@@ -147,10 +147,10 @@ function init() {
     entities.push(new Entity(
         300, 180,
         { type: 'DialNode', size: 20 },
-        "OK",
+        'ok',
         '^'
     ));
-    entities.filter(e => e.group === 'OK').forEach(e => {
+    entities.filter(e => e.group === 'ok').forEach(e => {
         e.setTarget(e.x, e.y, 0.1);
         e.x = 300;
         e.y = 200;
@@ -172,6 +172,14 @@ function init() {
     ));
     lastEntity().color = 'green';
 
+    entities.push(new Entity(
+        600, 200,
+        { type: 'Label' },
+        'welldone',
+        'WELL DONE!'
+    ));
+    lastEntity().color = 'purple';
+
     setupQuestionAndSolution();
 }
 
@@ -183,7 +191,7 @@ function update() {
 
     let letters = entities.filter(e => e.group === "letters");
     let digits = entities.filter(e => e.group === "digits");
-    let ok = entities.find(e => e.group === "OK");
+    let ok = entities.find(e => e.group === "ok");
     let selectedDial = state.selectedDial;
     if (keysPressed.includes('ArrowDown')) {
         selectedDial = (selectedDial + 1) % 3;
@@ -267,13 +275,24 @@ function update() {
             }
         }
         let completeAnswer = solution.every(square => state.answerText.includes(square));
-        if (completeAnswer && !state.answerText.includes('WELL DONE')) {
-            setAnswerText(state.answerText + ' - WELL DONE!');
+        if (completeAnswer && !state.solved) {
             state.solved = true;
-
+            // animate things out...
+            entities.find(e => e.group === 'welldone').setTarget(200,200,0.1);
+            entities.filter(e => e.group === 'letters').forEach(e => e.setTarget(e.x-600,e.y,0.005));
+            entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x-600,e.y,0.005));
+            entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x-600,e.y,0.005));
+            entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x,-40,0.005));
+        
         }
-
     }
+    if (keysPressed.includes('KeyT')) {
+        entities.find(e => e.group === 'welldone').setTarget(200,200,0.1);
+        entities.filter(e => e.group === 'letters').forEach(e => e.setTarget(e.x-600,e.y,0.005));
+        entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x-600,e.y,0.005));
+        entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x-600,e.y,0.005));
+        entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x,-40,0.005));
+}
 
     entities.forEach(e => {
         e.update();
