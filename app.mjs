@@ -168,26 +168,26 @@ function update() {
     ok.color = selectedDial === 2 ? 'yellow' : 'red';
     state.selectedDial = selectedDial;
 
-    // set color en selection
     let selection = [...letters, ...digits].filter(e => e.x > 280 && e.x < 320 && e.y > 80 && e.y < 160);
     if (selectedDial === 2) {
+        // set color on selection if inner dial is active
         selection.forEach(e => e.color = 'green');
     }
 
-    let moveDial = null;
+    let rotateDial = null;
     if (keysPressed.includes('ArrowRight')) {
-        moveDial = 'clockwise';
+        rotateDial = 'clockwise';
     }
     if (keysPressed.includes('ArrowLeft')) {
-        moveDial = 'counter-clockwise';
+        rotateDial = 'counter-clockwise';
     }
-    if (moveDial && selectedDial < 2) {
+    if (rotateDial && selectedDial < 2) {
         let isDigit = selectedDial === 1;
         let letterOrDigit = isDigit ? digits : letters;
         if (letterOrDigit[0].dt === 0) {
             let from = (isDigit ? '12345678' : 'ABCDEFGH').split('');
             let to = (isDigit ? '23456781' : 'BCDEFGHA').split('');
-            if (moveDial === 'counter-clockwise') {
+            if (rotateDial === 'counter-clockwise') {
                 [from, to] = [to, from];
             }
             let currentPositions = {};
@@ -227,11 +227,7 @@ function update() {
                     y: Math.sin(randomAngle)
                 };
                 let r = Math.random() * 600;
-                let e = new Entity(
-                    300,
-                    200,
-                    { type: 'Circle', size: (r / 600) * 10 }
-                );
+                let e = new Entity(300, 200, { type: 'Circle', size: (r / 600) * 10 });
                 e.color = getRandomVividColor();
                 e.setTarget(angle.x * r + 300, angle.y * r + 200, Math.random() * 0.1 + 0.01);
                 e.life = r / 600 * 50;
@@ -247,21 +243,10 @@ function update() {
             entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
             entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
             entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x, -40, 0.005));
-
         }
     }
-    if (keysPressed.includes('KeyT')) {
-        entities.find(e => e.group === 'welldone').setTarget(200, 200, 0.1);
-        entities.filter(e => e.group === 'letters').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
-        entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
-        entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
-        entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x, -40, 0.005));
-    }
 
-    entities.forEach(e => {
-        e.update();
-    })
-
+    entities.forEach(e => { e.update(); })
     entities = entities.filter(e => !e.dead);
 
     if (state.shake > 0) {
@@ -275,7 +260,6 @@ function update() {
 }
 
 function render() {
-    // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (state.shake > 0) {
@@ -286,14 +270,20 @@ function render() {
         if (!e.visible) return;
         if (e.ext.type === 'DialNode' || e.ext.type === 'Circle') {
             const entitySize = e.ext.size;
-            let t = (((tick + i) % 60) / 60) * 2 * Math.PI;
-            if (e.color !== 'yellow') t = 0;
-            let ofsx = Math.cos(t * 5) * 2;
-            let ofsy = Math.sin(t * 3) * 2;
+            let ofsx = 0;
+            let ofsy = 0;
+            let inSelectedDial = state.selectedDial === 0 && e.group === 'letters' ||
+                state.selectedDial === 1 && e.group === 'digits' ||
+                state.selectedDial === 2 && e.group === 'ok';
+            if (inSelectedDial) {
+                let t = (((tick + i) % 60) / 60) * 2 * Math.PI;
+                ofsx = Math.cos(t * 5) * 2;
+                ofsy = Math.sin(t * 3) * 2;
+            }
             let x = Math.floor(e.x + ofsx);
             let y = Math.floor(e.y + ofsy);
-            ctx.beginPath(); // Begin a new path
-            ctx.arc(x, y, entitySize, 0, Math.PI * 2); // Draw a circle (x, y, radius, startAngle, endAngle)
+            ctx.beginPath();
+            ctx.arc(x, y, entitySize, 0, Math.PI * 2);
             ctx.fillStyle = e.color;
             ctx.fill();
             ctx.closePath();
@@ -320,7 +310,6 @@ function render() {
     }
 }
 
-// Main game loop
 function gameLoop(time) {
     const deltaTime = time - lastTime;
     if (deltaTime >= interval) {
@@ -331,6 +320,6 @@ function gameLoop(time) {
     requestAnimationFrame(gameLoop);
 }
 
-// Start the game
+// game loop is kicked off here
 init();
 requestAnimationFrame(gameLoop);
