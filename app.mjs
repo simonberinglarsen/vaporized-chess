@@ -75,6 +75,9 @@ class Entity {
     }
 }
 
+// -------------
+// Scene helpers
+// -------------
 function squareToText(square) {
     const file = String.fromCharCode(65 + (square % 8)); // 65 is 'A'
     const rank = 8 - Math.floor(square / 8);
@@ -113,78 +116,39 @@ function setupQuestionAndSolution() {
     state.solution = edges.filter(e => e !== null).map(e => squareToText(e));
 }
 
+function addDial(str, radius, groupName) {
+    entities.push(...str
+        .split('')
+        .map((letter, i) => new Entity(
+            Math.cos(Math.PI * 2 / 8 * i - Math.PI / 2) * radius + 300,
+            Math.sin(Math.PI * 2 / 8 * i - Math.PI / 2) * radius + 200,
+            { type: 'DialNode', size: 20 },
+            groupName,
+            letter
+        )));
+    entities.filter(e => e.group === groupName).forEach(e => {
+        e.setTarget(e.x, e.y, 0.1);
+        e.x = 300;
+        e.y = 200;
+    });
+}
+
+function addLabel(str, group, x, y, color) {
+    entities.push(new Entity(x, y, { type: 'Label' }, group, str));
+    lastEntity().color = color;
+}
+
 function init() {
-    entities.push(...'ABCDEFGH'
-        .split('')
-        .map((letter, i) => new Entity(
-            Math.cos(Math.PI * 2 / 8 * i) * 100 + 300,
-            Math.sin(Math.PI * 2 / 8 * i) * 100 + 200,
-            { type: 'DialNode', size: 20 },
-            "letters",
-            letter
-        )));
-    entities.filter(e => e.group === 'letters').forEach(e => {
-        e.setTarget(e.x, e.y, 0.1);
-        e.x = 300;
-        e.y = 200;
-    });
+    addDial('ABCDEFGH', 100, 'letters');
+    addDial('12345678', 60, 'digits');
+    addDial('^', 20, 'ok');
 
-    entities.push(...'12345678'
-        .split('')
-        .map((letter, i) => new Entity(
-            Math.cos(Math.PI * 2 / 8 * i) * 60 + 300,
-            Math.sin(Math.PI * 2 / 8 * i) * 60 + 200,
-            { type: 'DialNode', size: 20 },
-            "digits",
-            letter
-        )));
-    entities.filter(e => e.group === 'digits').forEach(e => {
-        e.setTarget(e.x, e.y, 0.1);
-        e.x = 300;
-        e.y = 200;
-    });
-
-    entities.push(new Entity(
-        300, 180,
-        { type: 'DialNode', size: 20 },
-        'ok',
-        '^'
-    ));
-    entities.filter(e => e.group === 'ok').forEach(e => {
-        e.setTarget(e.x, e.y, 0.1);
-        e.x = 300;
-        e.y = 200;
-    });
-
-    entities.push(new Entity(
-        20, 40,
-        { type: 'Label' },
-        'question',
-        '...'
-    ));
-    lastEntity().color = 'white';
-
-    entities.push(new Entity(
-        0, 380,
-        { type: 'Label' },
-        'answer',
-        ''
-    ));
-    lastEntity().color = 'green';
-
-    entities.push(new Entity(
-        600, 200,
-        { type: 'Label' },
-        'welldone',
-        'WELL DONE!'
-    ));
-    lastEntity().color = 'purple';
+    addLabel('...', 'question', 20, 40, 'white');
+    addLabel('', 'answer', 0, 380, 'green');
+    addLabel('WELL DONE!', 'welldone', 600, 200, 'purple');
 
     setupQuestionAndSolution();
 }
-
-
-
 
 function update() {
     tick++;
@@ -278,21 +242,21 @@ function update() {
         if (completeAnswer && !state.solved) {
             state.solved = true;
             // animate things out...
-            entities.find(e => e.group === 'welldone').setTarget(200,200,0.1);
-            entities.filter(e => e.group === 'letters').forEach(e => e.setTarget(e.x-600,e.y,0.005));
-            entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x-600,e.y,0.005));
-            entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x-600,e.y,0.005));
-            entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x,-40,0.005));
-        
+            entities.find(e => e.group === 'welldone').setTarget(200, 200, 0.1);
+            entities.filter(e => e.group === 'letters').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
+            entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
+            entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
+            entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x, -40, 0.005));
+
         }
     }
     if (keysPressed.includes('KeyT')) {
-        entities.find(e => e.group === 'welldone').setTarget(200,200,0.1);
-        entities.filter(e => e.group === 'letters').forEach(e => e.setTarget(e.x-600,e.y,0.005));
-        entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x-600,e.y,0.005));
-        entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x-600,e.y,0.005));
-        entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x,-40,0.005));
-}
+        entities.find(e => e.group === 'welldone').setTarget(200, 200, 0.1);
+        entities.filter(e => e.group === 'letters').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
+        entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
+        entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
+        entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x, -40, 0.005));
+    }
 
     entities.forEach(e => {
         e.update();
