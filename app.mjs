@@ -1,10 +1,8 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-canvas.style.width = '900px';  // 600 * 1.5
-canvas.style.height = '600px'; // 400 * 1.5
-
-// Set the canvas resolution (actual drawing area)
+canvas.style.width = '900px';
+canvas.style.height = '600px';
 canvas.width = 600;
 canvas.height = 400;
 
@@ -12,10 +10,40 @@ let lastTime = 0;
 const fps = 30;
 const interval = 1000 / fps;
 
-// game vars
+// -------
+// library 
+// -------
+const color = [
+    "#000000",   //  0 black
+    "#1D2B53",   //  1 dark-blue
+    "#7E2553",   //  2 dark-purple
+    "#008751",   //  3 dark-green
+    "#AB5236",   //  4 brown
+    "#5F574F",   //  5 dark-grey
+    "#C2C3C7",   //  6 light-grey
+    "#FFF1E8",   //  7 white
+    "#FF004D",   //  8 red
+    "#FFA300",   //  9 orange
+    "#FFEC27",   // 10 yellow
+    "#00E436",   // 11 green
+    "#29ADFF",   // 12 blue
+    "#83769C",   // 13 lavender
+    "#FF77A8",   // 14 pink
+    "#FFCCAA"    // 15 light-peach
+];
 let keysPressed = [];
-let entities = []
 let tick = 0;
+window.addEventListener('keydown', function (event) {
+    if (!keysPressed.includes(event.code)) {
+        keysPressed.push(event.code);
+    }
+});
+
+
+// ---------
+// game vars
+// ---------
+let entities = []
 let state = {
     selectedDial: 0,
     selectionText: '',
@@ -25,12 +53,6 @@ let state = {
     shake: 0,
     solved: false
 }
-
-window.addEventListener('keydown', function (event) {
-    if (!keysPressed.includes(event.code)) {
-        keysPressed.push(event.code);
-    }
-});
 
 class Entity {
     constructor(x, y, ext, group, text) {
@@ -44,7 +66,7 @@ class Entity {
         this.group = group;
         this.text = text;
         this.visible = true;
-        this.color = 'red';
+        this.color = color[8];
     }
 
     setTarget(x, y, speed) {
@@ -104,7 +126,9 @@ function setAnswerText(txt) {
 function setupQuestionAndSolution() {
     let square = Math.floor(Math.random() * 64);
     state.questionText = `Bishop on ${squareToText(square)}, edge squares?`;
-    entities.find(e => e.group === 'question').text = state.questionText;
+    let question = entities.find(e => e.group === 'question');
+    question.text = state.questionText;
+    question.setTarget(300 - state.questionText.length * 10, 40, 0.1);
     const edges = [];
     const file = square % 8, rank = Math.floor(square / 8);
     for (let i = 1; i < 8; i++) {
@@ -143,19 +167,25 @@ function init() {
     addDial('12345678', 60, 'digits');
     addDial('^', 20, 'ok');
 
-    addLabel('...', 'question', 20, 40, 'white');
-    addLabel('', 'answer', 0, 380, 'green');
-    addLabel('WELL DONE!', 'welldone', 600, 200, 'purple');
+    addLabel('...', 'question', 20, -40, color[7]);
+    addLabel('', 'answer', 0, 380, color[11]);
+    addLabel('WELL DONE!', 'welldone', 650, 200, color[2]);
 
     setupQuestionAndSolution();
 }
 
+function moveGroupToFont(name) {
+    let theRest = [];
+    let theGroup = [];
+    for (let e of entities) {
+        e.group === name ? theGroup.push(e) : theRest.push(e);
+    }
+    entities = [...theRest, ...theGroup];
+}
+
 function update() {
     tick++;
-
-    let letters = entities.filter(e => e.group === "letters");
-    let digits = entities.filter(e => e.group === "digits");
-    let ok = entities.find(e => e.group === "ok");
+    let allDialNodes = entities.filter(e => e.ext.type === "DialNode")
     let selectedDial = state.selectedDial;
     if (keysPressed.includes('ArrowDown')) {
         selectedDial = (selectedDial + 1) % 3;
@@ -163,15 +193,16 @@ function update() {
     if (keysPressed.includes('ArrowUp')) {
         selectedDial = (selectedDial + 2) % 3;
     }
-    letters.forEach(e => e.color = selectedDial === 0 ? 'yellow' : 'red');
-    digits.forEach(e => e.color = selectedDial === 1 ? 'yellow' : 'red');
-    ok.color = selectedDial === 2 ? 'yellow' : 'red';
+    let activeGroupName = ['letters', 'digits', 'ok'][selectedDial];
+    let activeGroup = entities.filter(e => e.group === activeGroupName);
+    allDialNodes.forEach(e => { e.ext.size = 20; e.color = color[8] });
+    activeGroup.forEach(e => { e.ext.size = 22; e.color = color[10] });
+    moveGroupToFont(activeGroupName);
     state.selectedDial = selectedDial;
 
-    let selection = [...letters, ...digits].filter(e => e.x > 280 && e.x < 320 && e.y > 80 && e.y < 160);
+    let selection = allDialNodes.filter(e => e.x > 280 && e.x < 320 && e.y > 80 && e.y < 160);
     if (selectedDial === 2) {
-        // set color on selection if inner dial is active
-        selection.forEach(e => e.color = 'green');
+        selection.forEach(e => e.color = color[11]);
     }
 
     let rotateDial = null;
@@ -183,7 +214,7 @@ function update() {
     }
     if (rotateDial && selectedDial < 2) {
         let isDigit = selectedDial === 1;
-        let letterOrDigit = isDigit ? digits : letters;
+        let letterOrDigit = activeGroup;
         if (letterOrDigit[0].dt === 0) {
             let from = (isDigit ? '12345678' : 'ABCDEFGH').split('');
             let to = (isDigit ? '23456781' : 'BCDEFGHA').split('');
@@ -214,12 +245,6 @@ function update() {
         }
         else if (newAnswer) {
             setAnswerText((state.answerText + ' ' + selectionText).trim())
-            let getRandomVividColor = () => {
-                const r = Math.floor(Math.random() * 156) + 100;
-                const g = Math.floor(Math.random() * 156) + 100;
-                const b = Math.floor(Math.random() * 156) + 100;
-                return `rgb(${r}, ${g}, ${b})`;
-            }
             for (let i = 0; i < 250; i++) {
                 let randomAngle = Math.PI * 2 * Math.random();
                 let angle = {
@@ -228,7 +253,7 @@ function update() {
                 };
                 let r = Math.random() * 600;
                 let e = new Entity(300, 200, { type: 'Circle', size: (r / 600) * 10 });
-                e.color = getRandomVividColor();
+                e.color = color[Math.floor(Math.random() * 16)];
                 e.setTarget(angle.x * r + 300, angle.y * r + 200, Math.random() * 0.1 + 0.01);
                 e.life = r / 600 * 50;
                 entities.push(e);
@@ -260,7 +285,8 @@ function update() {
 }
 
 function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = color[0];
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (state.shake > 0) {
         ctx.save();
@@ -276,7 +302,7 @@ function render() {
                 state.selectedDial === 1 && e.group === 'digits' ||
                 state.selectedDial === 2 && e.group === 'ok';
             if (inSelectedDial) {
-                let t = (((tick + i) % 60) / 60) * 2 * Math.PI;
+                let t = (((tick + e.text.charCodeAt(0)) % 60) / 60) * 2 * Math.PI;
                 ofsx = Math.cos(t * 5) * 2;
                 ofsy = Math.sin(t * 3) * 2;
             }
@@ -290,7 +316,7 @@ function render() {
             if (e.text) {
                 ctx.font = "20px 'Press Start 2P', monospace";
                 ctx.fillStyle = "black";
-                ctx.fillText(e.text, x - entitySize / 2, y - entitySize / 2 + 20);
+                ctx.fillText(e.text, x-10, y+10);
             }
         }
         else if (e.ext.type === 'Label') {
@@ -308,6 +334,10 @@ function render() {
     if (state.shake > 0) {
         ctx.restore();
     }
+
+    ctx.font = "20px 'Press Start 2P', monospace";
+    ctx.fillStyle = "black";
+    ctx.fillText(`#e = ${entities.length}`,0,20);
 }
 
 function gameLoop(time) {
