@@ -183,27 +183,22 @@ function moveGroupToFont(name) {
     entities = [...theRest, ...theGroup];
 }
 
-function update() {
-    tick++;
-    let allDialNodes = entities.filter(e => e.ext.type === "DialNode")
-    let selectedDial = state.selectedDial;
+function updateArrowUpDown(allDialNodes) {
     if (keysPressed.includes('ArrowDown')) {
-        selectedDial = (selectedDial + 1) % 3;
+        state.selectedDial = (state.selectedDial + 1) % 3;
     }
     if (keysPressed.includes('ArrowUp')) {
-        selectedDial = (selectedDial + 2) % 3;
+        state.selectedDial = (state.selectedDial + 2) % 3;
     }
+}
+
+function updateArrowLeftRight(allDialNodes) {
+    let selectedDial = state.selectedDial;
     let activeGroupName = ['letters', 'digits', 'ok'][selectedDial];
     let activeGroup = entities.filter(e => e.group === activeGroupName);
     allDialNodes.forEach(e => { e.ext.size = 20; e.color = color[8] });
     activeGroup.forEach(e => { e.ext.size = 22; e.color = color[10] });
     moveGroupToFont(activeGroupName);
-    state.selectedDial = selectedDial;
-
-    let selection = allDialNodes.filter(e => e.x > 280 && e.x < 320 && e.y > 80 && e.y < 160);
-    if (selectedDial === 2) {
-        selection.forEach(e => e.color = color[11]);
-    }
 
     let rotateDial = null;
     if (keysPressed.includes('ArrowRight')) {
@@ -230,9 +225,15 @@ function update() {
                 l.setTarget(targetPos.x, targetPos.y, 0.3)
             });
         }
-
     }
-    if (keysPressed.includes('Enter') && selectedDial === 2) {
+}
+
+function updateEnterKey(allDialNodes) {
+    let selection = allDialNodes.filter(e => e.x > 280 && e.x < 320 && e.y > 80 && e.y < 160);
+    if (state.selectedDial === 2) {
+        selection.forEach(e => e.color = color[11]);
+    }
+    if (keysPressed.includes('Enter') && state.selectedDial === 2) {
         let letter = selection.find(e => e.group === 'letters').text;
         let digit = selection.find(e => e.group === 'digits').text;
         let selectionText = letter + digit;
@@ -270,6 +271,19 @@ function update() {
             entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x, -40, 0.005));
         }
     }
+}
+
+function update() {
+    tick++;
+
+    let allDialNodes = entities.filter(e => e.ext.type === "DialNode")
+
+    if(!state.solved){
+        updateArrowUpDown(allDialNodes);
+        updateArrowLeftRight(allDialNodes);
+        updateEnterKey(allDialNodes)
+    }
+
 
     entities.forEach(e => { e.update(); })
     entities = entities.filter(e => !e.dead);
@@ -316,7 +330,7 @@ function render() {
             if (e.text) {
                 ctx.font = "20px 'Press Start 2P', monospace";
                 ctx.fillStyle = "black";
-                ctx.fillText(e.text, x-10, y+10);
+                ctx.fillText(e.text, x - 10, y + 10);
             }
         }
         else if (e.ext.type === 'Label') {
@@ -337,7 +351,7 @@ function render() {
 
     ctx.font = "20px 'Press Start 2P', monospace";
     ctx.fillStyle = "black";
-    ctx.fillText(`#e = ${entities.length}`,0,20);
+    ctx.fillText(`#e = ${entities.length}`, 0, 20);
 }
 
 function gameLoop(time) {
