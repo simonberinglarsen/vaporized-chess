@@ -131,7 +131,7 @@ function moveGroupToFont(name) {
     entities = [...theRest, ...theGroup];
 }
 
-function updateArrowUpDown(allDialNodes) {
+function updateOnArrowUpDown(allDialNodes) {
     if (engine.keysPressed.includes('ArrowDown')) {
         state.selectedDial = (state.selectedDial + 1) % 3;
     }
@@ -159,7 +159,7 @@ function updateRotateDial(letterOrDigit, direction) {
     }
 }
 
-function updateArrowLeftRight(allDialNodes) {
+function updateOnArrowLeftRight(allDialNodes) {
     let selectedDial = state.selectedDial;
     let activeGroupName = ['letters', 'digits', 'ok'][selectedDial];
     let activeGroup = entities.filter(e => e.group === activeGroupName);
@@ -225,7 +225,7 @@ function updateOnSubmitAnswer(selection) {
     }
 }
 
-function updateEnterKey(allDialNodes) {
+function updateOnEnterKey(allDialNodes) {
     let selection = allDialNodes.filter(e => e.x > 280 && e.x < 320 && e.y > 80 && e.y < 160);
     if (state.selectedDial === 2) {
         selection.forEach(e => e.color = engine.color[11]);
@@ -294,9 +294,9 @@ function init() {
 function update() {
     let allDialNodes = entities.filter(e => e.ext.type === "DialNode")
     if (!state.solved) {
-        updateArrowUpDown(allDialNodes);
-        updateArrowLeftRight(allDialNodes);
-        updateEnterKey(allDialNodes)
+        updateOnArrowUpDown(allDialNodes);
+        updateOnArrowLeftRight(allDialNodes);
+        updateOnEnterKey(allDialNodes)
     }
     entities.forEach(e => { e.update(); })
     entities = entities.filter(e => !e.dead);
