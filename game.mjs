@@ -179,48 +179,59 @@ function updateArrowLeftRight(allDialNodes) {
     }
 }
 
+function updateOnSolved() {
+    state.solved = true;
+    entities.find(e => e.group === 'welldone').setTarget(200, 200, 0.1);
+    entities.filter(e => e.group === 'letters').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
+    entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
+    entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
+    entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x, -40, 0.005));
+}
+
+function updateOnNewAnswer(selectionText) {
+    setAnswerText((state.answerText + ' ' + selectionText).trim())
+    for (let i = 0; i < 250; i++) {
+        let randomAngle = Math.PI * 2 * Math.random();
+        let angle = {
+            x: Math.cos(randomAngle),
+            y: Math.sin(randomAngle)
+        };
+        let r = Math.random() * 600;
+        let e = new Entity(300, 200, { type: 'Circle', size: (r / 600) * 10 });
+        e.color = engine.color[Math.floor(Math.random() * 16)];
+        e.setTarget(angle.x * r + 300, angle.y * r + 200, Math.random() * 0.1 + 0.01);
+        e.life = r / 600 * 50;
+        entities.push(e);
+    }
+}
+
+function updateOnSubmitAnswer(selection) {
+    let letter = selection.find(e => e.group === 'letters').text;
+    let digit = selection.find(e => e.group === 'digits').text;
+    let selectionText = letter + digit;
+    let solution = state.solution;
+    let correctSolution = solution.includes(selectionText);
+    let newAnswer = !state.answerText.includes(selectionText);
+
+    if (!correctSolution) {
+        state.shake = 10;
+    }
+    else if (newAnswer) {
+        updateOnNewAnswer(selectionText);
+    }
+    let completeAnswer = solution.every(square => state.answerText.includes(square));
+    if (completeAnswer && !state.solved) {
+        updateOnSolved();
+    }
+}
+
 function updateEnterKey(allDialNodes) {
     let selection = allDialNodes.filter(e => e.x > 280 && e.x < 320 && e.y > 80 && e.y < 160);
     if (state.selectedDial === 2) {
         selection.forEach(e => e.color = engine.color[11]);
     }
     if (engine.keysPressed.includes('Enter') && state.selectedDial === 2) {
-        let letter = selection.find(e => e.group === 'letters').text;
-        let digit = selection.find(e => e.group === 'digits').text;
-        let selectionText = letter + digit;
-        let solution = state.solution;
-        let correctSolution = solution.includes(selectionText);
-        let newAnswer = !state.answerText.includes(selectionText);
-
-        if (!correctSolution) {
-            state.shake = 10;
-        }
-        else if (newAnswer) {
-            setAnswerText((state.answerText + ' ' + selectionText).trim())
-            for (let i = 0; i < 250; i++) {
-                let randomAngle = Math.PI * 2 * Math.random();
-                let angle = {
-                    x: Math.cos(randomAngle),
-                    y: Math.sin(randomAngle)
-                };
-                let r = Math.random() * 600;
-                let e = new Entity(300, 200, { type: 'Circle', size: (r / 600) * 10 });
-                e.color = engine.color[Math.floor(Math.random() * 16)];
-                e.setTarget(angle.x * r + 300, angle.y * r + 200, Math.random() * 0.1 + 0.01);
-                e.life = r / 600 * 50;
-                entities.push(e);
-            }
-        }
-        let completeAnswer = solution.every(square => state.answerText.includes(square));
-        if (completeAnswer && !state.solved) {
-            state.solved = true;
-            // animate things out...
-            entities.find(e => e.group === 'welldone').setTarget(200, 200, 0.1);
-            entities.filter(e => e.group === 'letters').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
-            entities.filter(e => e.group === 'digits').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
-            entities.filter(e => e.group === 'ok').forEach(e => e.setTarget(e.x - 600, e.y, 0.005));
-            entities.filter(e => e.group === 'question').forEach(e => e.setTarget(e.x, -40, 0.005));
-        }
+        updateOnSubmitAnswer(selection);
     }
 }
 
@@ -265,6 +276,9 @@ function renderEntities() {
     });
 }
 
+// ------------
+// engine hooks
+// ------------
 function init() {
     addDial('ABCDEFGH', 100, 'letters');
     addDial('12345678', 60, 'digits');
