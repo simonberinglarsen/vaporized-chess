@@ -122,18 +122,6 @@ function addLabel(str, group, x, y, color) {
     lastEntity().color = color;
 }
 
-function init() {
-    addDial('ABCDEFGH', 100, 'letters');
-    addDial('12345678', 60, 'digits');
-    addDial('^', 20, 'ok');
-
-    addLabel('...', 'question', 20, -40, engine.color[7]);
-    addLabel('', 'answer', 0, 380, engine.color[11]);
-    addLabel('WELL DONE!', 'welldone', 650, 200, engine.color[2]);
-
-    setupQuestionAndSolution();
-}
-
 function moveGroupToFont(name) {
     let theRest = [];
     let theGroup = [];
@@ -152,6 +140,25 @@ function updateArrowUpDown(allDialNodes) {
     }
 }
 
+function updateRotateDial(letterOrDigit, direction) {
+    let isDigit = state.selectedDial === 1;
+    if (letterOrDigit[0].dt === 0) {
+        let from = (isDigit ? '12345678' : 'ABCDEFGH').split('');
+        let to = (isDigit ? '23456781' : 'BCDEFGHA').split('');
+        if (direction === 'counter-clockwise') {
+            [from, to] = [to, from];
+        }
+        let currentPositions = {};
+        letterOrDigit.forEach(l => currentPositions[l.text] = { x: l.x, y: l.y });
+        letterOrDigit.forEach(l => {
+            let indexOfLetter = from.indexOf(l.text);
+            let targetLetter = to[indexOfLetter];
+            let targetPos = currentPositions[targetLetter];
+            l.setTarget(targetPos.x, targetPos.y, 0.3)
+        });
+    }
+}
+
 function updateArrowLeftRight(allDialNodes) {
     let selectedDial = state.selectedDial;
     let activeGroupName = ['letters', 'digits', 'ok'][selectedDial];
@@ -160,31 +167,15 @@ function updateArrowLeftRight(allDialNodes) {
     activeGroup.forEach(e => { e.ext.size = 22; e.color = engine.color[10] });
     moveGroupToFont(activeGroupName);
 
-    let rotateDial = null;
+    let rotateDialDirection = null;
     if (engine.keysPressed.includes('ArrowRight')) {
-        rotateDial = 'clockwise';
+        rotateDialDirection = 'clockwise';
     }
     if (engine.keysPressed.includes('ArrowLeft')) {
-        rotateDial = 'counter-clockwise';
+        rotateDialDirection = 'counter-clockwise';
     }
-    if (rotateDial && selectedDial < 2) {
-        let isDigit = selectedDial === 1;
-        let letterOrDigit = activeGroup;
-        if (letterOrDigit[0].dt === 0) {
-            let from = (isDigit ? '12345678' : 'ABCDEFGH').split('');
-            let to = (isDigit ? '23456781' : 'BCDEFGHA').split('');
-            if (rotateDial === 'counter-clockwise') {
-                [from, to] = [to, from];
-            }
-            let currentPositions = {};
-            letterOrDigit.forEach(l => currentPositions[l.text] = { x: l.x, y: l.y });
-            letterOrDigit.forEach(l => {
-                let indexOfLetter = from.indexOf(l.text);
-                let targetLetter = to[indexOfLetter];
-                let targetPos = currentPositions[targetLetter];
-                l.setTarget(targetPos.x, targetPos.y, 0.3)
-            });
-        }
+    if (rotateDialDirection && selectedDial < 2) {
+        updateRotateDial(activeGroup, rotateDialDirection);
     }
 }
 
@@ -233,24 +224,70 @@ function updateEnterKey(allDialNodes) {
     }
 }
 
+function renderCircle(e) {
+    const entitySize = e.ext.size;
+    let ofsx = 0;
+    let ofsy = 0;
+    let inSelectedDial = state.selectedDial === 0 && e.group === 'letters' ||
+        state.selectedDial === 1 && e.group === 'digits' ||
+        state.selectedDial === 2 && e.group === 'ok';
+    if (inSelectedDial) {
+        let t = (((engine.tick + e.text.charCodeAt(0) * 4) % 60) / 60) * 2 * Math.PI;
+        ofsx = Math.cos(t * 5) * 2;
+        ofsy = Math.sin(t * 3) * 2;
+    }
+    let x = Math.floor(e.x + ofsx);
+    let y = Math.floor(e.y + ofsy);
+    engine.fillCirc(x, y, entitySize, e.color);
+    if (e.text) {
+        engine.text(e.text, x - 10, y + 10, engine.color[0]);
+    }
+}
+
+function renderLabel(e) {
+    let ofs = 0;
+    if (e.group === 'answer') {
+        let t = ((engine.tick % 40) / 40) * 2 * Math.PI;
+        ofs = Math.cos(t) * 10;
+    }
+    engine.text(e.text, e.x + ofs, e.y, e.color);
+}
+
+function renderEntities() {
+    entities.forEach((e, i) => {
+        if (!e.visible) return;
+        if (e.ext.type === 'DialNode' || e.ext.type === 'Circle') {
+            renderCircle(e);
+        }
+        else if (e.ext.type === 'Label') {
+            renderLabel(e);
+        }
+    });
+}
+
+function init() {
+    addDial('ABCDEFGH', 100, 'letters');
+    addDial('12345678', 60, 'digits');
+    addDial('^', 20, 'ok');
+
+    addLabel('...', 'question', 20, -40, engine.color[7]);
+    addLabel('', 'answer', 0, 380, engine.color[11]);
+    addLabel('WELL DONE!', 'welldone', 650, 200, engine.color[2]);
+
+    setupQuestionAndSolution();
+}
+
 function update() {
     let allDialNodes = entities.filter(e => e.ext.type === "DialNode")
-
-    if(!state.solved){
+    if (!state.solved) {
         updateArrowUpDown(allDialNodes);
         updateArrowLeftRight(allDialNodes);
         updateEnterKey(allDialNodes)
     }
-
-
     entities.forEach(e => { e.update(); })
     entities = entities.filter(e => !e.dead);
-
     if (state.shake > 0) {
         state.shake--;
-    }
-    else {
-        state.shake = 0;
     }
 }
 
@@ -261,42 +298,15 @@ function render() {
         engine.pushMatrix();
         engine.translate((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
     }
-    entities.forEach((e, i) => {
-        if (!e.visible) return;
-        if (e.ext.type === 'DialNode' || e.ext.type === 'Circle') {
-            const entitySize = e.ext.size;
-            let ofsx = 0;
-            let ofsy = 0;
-            let inSelectedDial = state.selectedDial === 0 && e.group === 'letters' ||
-                state.selectedDial === 1 && e.group === 'digits' ||
-                state.selectedDial === 2 && e.group === 'ok';
-            if (inSelectedDial) {
-                let t = (((engine.tick + e.text.charCodeAt(0)*4) % 60) / 60) * 2 * Math.PI;
-                ofsx = Math.cos(t * 5) * 2;
-                ofsy = Math.sin(t * 3) * 2;
-            }
-            let x = Math.floor(e.x + ofsx);
-            let y = Math.floor(e.y + ofsy);
-            engine.fillCirc(x, y, entitySize, e.color);
-            if (e.text) {
-                engine.text(e.text, x - 10, y + 10, engine.color[0]);
-            }
-        }
-        else if (e.ext.type === 'Label') {
-            let ofs = 0;
-            if (e.group === 'answer') {
-                let t = ((engine.tick % 40) / 40) * 2 * Math.PI;
-                ofs = Math.cos(t) * 10;
-            }
-            engine.text(e.text, e.x + ofs, e.y, e.color);
-        }
-    });
+
+    renderEntities();
 
     if (state.shake > 0) {
         engine.popMatrix();
     }
 
-    engine.text(`#e = ${entities.length}`, 0, 20, engine.color[0])
+    // debug info:
+    // engine.text(`#e = ${entities.length}`, 0, 20, engine.color[1])
 }
 
 export { init, update, render };
