@@ -6,9 +6,9 @@ canvas.style.height = '600px';
 canvas.width = 600;
 canvas.height = 400;
 
-let lastTime = 0;
 const fps = 30;
 const interval = 1000 / fps;
+let lastTime = 0;
 let tick = 0;
 let game = null;
 let keysPressed = [];
@@ -57,4 +57,42 @@ function gameLoop(time) {
     requestAnimationFrame(gameLoop);
 }
 
-export { run, tick, ctx, canvas, color, keysPressed};
+function cls() {
+    ctx.fillStyle = color[0];
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function pushMatrix() {
+    ctx.save();
+}
+
+function popMatrix() {
+    ctx.restore();
+}
+
+function translate(x, y) {
+    ctx.translate(x, y);
+}
+
+function fillCirc(x, y, size, color) {
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.closePath();
+}
+
+function text(txt, x, y, color) {
+    ctx.font = "20px 'Press Start 2P', monospace";
+    ctx.fillStyle = color;
+    ctx.fillText(txt, x, y);
+}
+
+
+export {
+    run,
+    tick,
+    color,
+    keysPressed,
+    cls, pushMatrix, popMatrix, translate, fillCirc, text
+};

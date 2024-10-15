@@ -255,13 +255,11 @@ function update() {
 }
 
 function render() {
-
-    engine.ctx.fillStyle = engine.color[0];
-    engine.ctx.fillRect(0, 0, engine.canvas.width, engine.canvas.height);
+    engine.cls();
 
     if (state.shake > 0) {
-        engine.ctx.save();
-        engine.ctx.translate((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
+        engine.pushMatrix();
+        engine.translate((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
     }
     entities.forEach((e, i) => {
         if (!e.visible) return;
@@ -279,52 +277,26 @@ function render() {
             }
             let x = Math.floor(e.x + ofsx);
             let y = Math.floor(e.y + ofsy);
-            engine.ctx.beginPath();
-            engine.ctx.arc(x, y, entitySize, 0, Math.PI * 2);
-            engine.ctx.fillStyle = e.color;
-            engine.ctx.fill();
-            engine.ctx.closePath();
+            engine.fillCirc(x, y, entitySize, e.color);
             if (e.text) {
-                engine.ctx.font = "20px 'Press Start 2P', monospace";
-                engine.ctx.fillStyle = "black";
-                engine.ctx.fillText(e.text, x - 10, y + 10);
+                engine.text(e.text, x - 10, y + 10, engine.color[0]);
             }
         }
         else if (e.ext.type === 'Label') {
-            engine.ctx.font = "20px 'Press Start 2P', monospace";
-            engine.ctx.fillStyle = e.color;
             let ofs = 0;
             if (e.group === 'answer') {
                 let t = ((engine.tick % 40) / 40) * 2 * Math.PI;
                 ofs = Math.cos(t) * 10;
             }
-            engine.ctx.fillText(e.text, e.x + ofs, e.y);
+            engine.text(e.text, e.x + ofs, e.y, e.color);
         }
     });
 
     if (state.shake > 0) {
-        engine.ctx.restore();
+        engine.popMatrix();
     }
 
-    engine.ctx.font = "20px 'Press Start 2P', monospace";
-    engine.ctx.fillStyle = "black";
-    engine.ctx.fillText(`#e = ${entities.length}`, 0, 20);
+    engine.text(`#e = ${entities.length}`, 0, 20, engine.color[0])
 }
-
-/*
-function gameLoop(time) {
-    const deltaTime = time - lastTime;
-    if (deltaTime >= interval) {
-        update();
-        render();
-        lastTime = time;
-    }
-    requestAnimationFrame(gameLoop);
-}
-
-// game loop is kicked off here
-init();
-requestAnimationFrame(gameLoop);
-*/
 
 export { init, update, render };
