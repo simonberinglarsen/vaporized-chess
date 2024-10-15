@@ -1,44 +1,4 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-canvas.style.width = '900px';
-canvas.style.height = '600px';
-canvas.width = 600;
-canvas.height = 400;
-
-let lastTime = 0;
-const fps = 30;
-const interval = 1000 / fps;
-
-// -------
-// library 
-// -------
-const color = [
-    "#000000",   //  0 black
-    "#1D2B53",   //  1 dark-blue
-    "#7E2553",   //  2 dark-purple
-    "#008751",   //  3 dark-green
-    "#AB5236",   //  4 brown
-    "#5F574F",   //  5 dark-grey
-    "#C2C3C7",   //  6 light-grey
-    "#FFF1E8",   //  7 white
-    "#FF004D",   //  8 red
-    "#FFA300",   //  9 orange
-    "#FFEC27",   // 10 yellow
-    "#00E436",   // 11 green
-    "#29ADFF",   // 12 blue
-    "#83769C",   // 13 lavender
-    "#FF77A8",   // 14 pink
-    "#FFCCAA"    // 15 light-peach
-];
-let keysPressed = [];
-let tick = 0;
-window.addEventListener('keydown', function (event) {
-    if (!keysPressed.includes(event.code)) {
-        keysPressed.push(event.code);
-    }
-});
-
+import * as engine from './engine.mjs';
 
 // ---------
 // game vars
@@ -66,7 +26,7 @@ class Entity {
         this.group = group;
         this.text = text;
         this.visible = true;
-        this.color = color[8];
+        this.color = engine.color[8];
     }
 
     setTarget(x, y, speed) {
@@ -167,9 +127,9 @@ function init() {
     addDial('12345678', 60, 'digits');
     addDial('^', 20, 'ok');
 
-    addLabel('...', 'question', 20, -40, color[7]);
-    addLabel('', 'answer', 0, 380, color[11]);
-    addLabel('WELL DONE!', 'welldone', 650, 200, color[2]);
+    addLabel('...', 'question', 20, -40, engine.color[7]);
+    addLabel('', 'answer', 0, 380, engine.color[11]);
+    addLabel('WELL DONE!', 'welldone', 650, 200, engine.color[2]);
 
     setupQuestionAndSolution();
 }
@@ -184,10 +144,10 @@ function moveGroupToFont(name) {
 }
 
 function updateArrowUpDown(allDialNodes) {
-    if (keysPressed.includes('ArrowDown')) {
+    if (engine.keysPressed.includes('ArrowDown')) {
         state.selectedDial = (state.selectedDial + 1) % 3;
     }
-    if (keysPressed.includes('ArrowUp')) {
+    if (engine.keysPressed.includes('ArrowUp')) {
         state.selectedDial = (state.selectedDial + 2) % 3;
     }
 }
@@ -196,15 +156,15 @@ function updateArrowLeftRight(allDialNodes) {
     let selectedDial = state.selectedDial;
     let activeGroupName = ['letters', 'digits', 'ok'][selectedDial];
     let activeGroup = entities.filter(e => e.group === activeGroupName);
-    allDialNodes.forEach(e => { e.ext.size = 20; e.color = color[8] });
-    activeGroup.forEach(e => { e.ext.size = 22; e.color = color[10] });
+    allDialNodes.forEach(e => { e.ext.size = 20; e.color = engine.color[8] });
+    activeGroup.forEach(e => { e.ext.size = 22; e.color = engine.color[10] });
     moveGroupToFont(activeGroupName);
 
     let rotateDial = null;
-    if (keysPressed.includes('ArrowRight')) {
+    if (engine.keysPressed.includes('ArrowRight')) {
         rotateDial = 'clockwise';
     }
-    if (keysPressed.includes('ArrowLeft')) {
+    if (engine.keysPressed.includes('ArrowLeft')) {
         rotateDial = 'counter-clockwise';
     }
     if (rotateDial && selectedDial < 2) {
@@ -231,9 +191,9 @@ function updateArrowLeftRight(allDialNodes) {
 function updateEnterKey(allDialNodes) {
     let selection = allDialNodes.filter(e => e.x > 280 && e.x < 320 && e.y > 80 && e.y < 160);
     if (state.selectedDial === 2) {
-        selection.forEach(e => e.color = color[11]);
+        selection.forEach(e => e.color = engine.color[11]);
     }
-    if (keysPressed.includes('Enter') && state.selectedDial === 2) {
+    if (engine.keysPressed.includes('Enter') && state.selectedDial === 2) {
         let letter = selection.find(e => e.group === 'letters').text;
         let digit = selection.find(e => e.group === 'digits').text;
         let selectionText = letter + digit;
@@ -254,7 +214,7 @@ function updateEnterKey(allDialNodes) {
                 };
                 let r = Math.random() * 600;
                 let e = new Entity(300, 200, { type: 'Circle', size: (r / 600) * 10 });
-                e.color = color[Math.floor(Math.random() * 16)];
+                e.color = engine.color[Math.floor(Math.random() * 16)];
                 e.setTarget(angle.x * r + 300, angle.y * r + 200, Math.random() * 0.1 + 0.01);
                 e.life = r / 600 * 50;
                 entities.push(e);
@@ -274,8 +234,6 @@ function updateEnterKey(allDialNodes) {
 }
 
 function update() {
-    tick++;
-
     let allDialNodes = entities.filter(e => e.ext.type === "DialNode")
 
     if(!state.solved){
@@ -294,17 +252,16 @@ function update() {
     else {
         state.shake = 0;
     }
-
-    keysPressed = [];
 }
 
 function render() {
-    ctx.fillStyle = color[0];
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    engine.ctx.fillStyle = engine.color[0];
+    engine.ctx.fillRect(0, 0, engine.canvas.width, engine.canvas.height);
 
     if (state.shake > 0) {
-        ctx.save();
-        ctx.translate((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
+        engine.ctx.save();
+        engine.ctx.translate((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
     }
     entities.forEach((e, i) => {
         if (!e.visible) return;
@@ -316,44 +273,45 @@ function render() {
                 state.selectedDial === 1 && e.group === 'digits' ||
                 state.selectedDial === 2 && e.group === 'ok';
             if (inSelectedDial) {
-                let t = (((tick + e.text.charCodeAt(0)) % 60) / 60) * 2 * Math.PI;
+                let t = (((engine.tick + e.text.charCodeAt(0)*4) % 60) / 60) * 2 * Math.PI;
                 ofsx = Math.cos(t * 5) * 2;
                 ofsy = Math.sin(t * 3) * 2;
             }
             let x = Math.floor(e.x + ofsx);
             let y = Math.floor(e.y + ofsy);
-            ctx.beginPath();
-            ctx.arc(x, y, entitySize, 0, Math.PI * 2);
-            ctx.fillStyle = e.color;
-            ctx.fill();
-            ctx.closePath();
+            engine.ctx.beginPath();
+            engine.ctx.arc(x, y, entitySize, 0, Math.PI * 2);
+            engine.ctx.fillStyle = e.color;
+            engine.ctx.fill();
+            engine.ctx.closePath();
             if (e.text) {
-                ctx.font = "20px 'Press Start 2P', monospace";
-                ctx.fillStyle = "black";
-                ctx.fillText(e.text, x - 10, y + 10);
+                engine.ctx.font = "20px 'Press Start 2P', monospace";
+                engine.ctx.fillStyle = "black";
+                engine.ctx.fillText(e.text, x - 10, y + 10);
             }
         }
         else if (e.ext.type === 'Label') {
-            ctx.font = "20px 'Press Start 2P', monospace";
-            ctx.fillStyle = e.color;
+            engine.ctx.font = "20px 'Press Start 2P', monospace";
+            engine.ctx.fillStyle = e.color;
             let ofs = 0;
             if (e.group === 'answer') {
-                let t = ((tick % 40) / 40) * 2 * Math.PI;
+                let t = ((engine.tick % 40) / 40) * 2 * Math.PI;
                 ofs = Math.cos(t) * 10;
             }
-            ctx.fillText(e.text, e.x + ofs, e.y);
+            engine.ctx.fillText(e.text, e.x + ofs, e.y);
         }
     });
 
     if (state.shake > 0) {
-        ctx.restore();
+        engine.ctx.restore();
     }
 
-    ctx.font = "20px 'Press Start 2P', monospace";
-    ctx.fillStyle = "black";
-    ctx.fillText(`#e = ${entities.length}`, 0, 20);
+    engine.ctx.font = "20px 'Press Start 2P', monospace";
+    engine.ctx.fillStyle = "black";
+    engine.ctx.fillText(`#e = ${entities.length}`, 0, 20);
 }
 
+/*
 function gameLoop(time) {
     const deltaTime = time - lastTime;
     if (deltaTime >= interval) {
@@ -367,3 +325,6 @@ function gameLoop(time) {
 // game loop is kicked off here
 init();
 requestAnimationFrame(gameLoop);
+*/
+
+export { init, update, render };

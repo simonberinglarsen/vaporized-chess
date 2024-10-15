@@ -28,7 +28,11 @@
 <body>
     <canvas id="gameCanvas" width="600" height="400"></canvas>
     <script type="module">
-        import * as x from './app.mjs';
+        import * as engine from './engine.mjs';
+        import * as game from './game.mjs';
+
+        engine.run(game);
+
     </script>
 
 </body>
