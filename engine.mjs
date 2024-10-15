@@ -12,6 +12,7 @@ let lastTime = 0;
 let tick = 0;
 let game = null;
 let keysPressed = [];
+let nextScene = null;
 
 const color = [
     "#000000",   //  0 black
@@ -45,13 +46,23 @@ function run(g) {
     requestAnimationFrame(gameLoop);
 }
 
+function handleSceneChange() {
+    game.destroy();
+    game = nextScene;
+    game.init();
+    nextScene = null;
+}
+
 function gameLoop(time) {
     const deltaTime = time - lastTime;
     if (deltaTime >= interval) {
         tick++;
+        if (nextScene) {
+            handleSceneChange();
+        }
         game.update();
-        keysPressed = [];
         game.render();
+        keysPressed = [];
         lastTime = time;
     }
     requestAnimationFrame(gameLoop);
@@ -88,11 +99,14 @@ function text(txt, x, y, color) {
     ctx.fillText(txt, x, y);
 }
 
+function goToScene(newScene) {
+    nextScene = newScene;
+}
 
 export {
     run,
     tick,
     color,
     keysPressed,
-    cls, pushMatrix, popMatrix, translate, fillCirc, text
+    cls, pushMatrix, popMatrix, translate, fillCirc, text, goToScene
 };

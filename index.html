@@ -18,9 +18,9 @@
         }
 
         canvas {
-            border: 1px solid #555;
+            border: 2px solid #555;
             box-shadow: 0.25rem 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
-
+            border-radius: 0.5rem;
         }
     </style>
 </head>
@@ -29,12 +29,10 @@
     <canvas id="gameCanvas" width="600" height="400"></canvas>
     <script type="module">
         import * as engine from './engine.mjs';
-        import * as game from './game.mjs';
+        import * as score from './scenes/score.mjs';
 
-        engine.run(game);
-
+        engine.run(score);
     </script>
-
 </body>
 
 </html>
