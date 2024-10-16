@@ -35,16 +35,15 @@ const color = [
     "#FFCCAA"    // 15 light-peach
 ];
 
-window.addEventListener('keydown', function (event) {
-    onKeyPressed(event.code);
-});
-
 function onKeyPress(code) {
     if (!keysPressed.includes(code)) {
         keysPressed.push(code);
     }
 }
 
+window.addEventListener('keydown', function (event) {
+    onKeyPress(event.code);
+});
 
 function run(g) {
     game = g;
