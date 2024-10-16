@@ -2,7 +2,7 @@
     "name": "Vaporized Chess",
     "short_name": "VaporizedApp",
     "description": "Vaporized Chess",
-    "start_url": "/vaporized-chess/",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#333333",
