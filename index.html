@@ -94,34 +94,6 @@
         .btn.green {
             background-color: #676;
         }
-
-        #overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-            /* Adjust the blur intensity here */
-            z-index: 1;
-            display: none;
-        }
-
-        #install-button {
-            padding: 10px 20px;
-            font-size: 3vh;
-            color: #FFF1E8;
-            background-color: #7E2553;
-            padding: 3vh;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Press Start 2P', monospace;
-        }
     </style>
 </head>
 
@@ -142,10 +114,6 @@
             <div></div>
             <div></div>
         </div>
-        <div id="overlay">
-            <button id="install-button">Install me!</button>
-        </div>
-
     </div>
     <script type="module">
         import * as engine from './engine.mjs';
@@ -161,25 +129,6 @@
             { class: 'btn-left', code: 'ArrowLeft' },
             { class: 'btn-right', code: 'ArrowRight' },
         ].forEach(m => document.getElementById(m.class).addEventListener('click', () => engine.onKeyPress(m.code)));
-
-        // PWA code
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const overlay = document.getElementById('overlay');
-            overlay.style.display = 'flex';
-            const installButton = document.getElementById('install-button');
-            installButton.addEventListener('click', async () => {
-                document.getElementById('overlay').style.display = 'none';
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    console.log(`User choice: ${outcome}`);
-                    deferredPrompt = null;
-                }
-            });
-        });
 
         document.addEventListener("touchstart", function () { }, true);
         if ('serviceWorker' in navigator) {
