@@ -73,7 +73,7 @@ function lastEntity() {
 function setAnswerText(txt) {
     state.answerText = txt;
     let e = entities.find(e => e.group === 'answer');
-    e.x = 300 - txt.length * 10;
+    e.x = engine.centerx - engine.textWidth(txt) / 2;
     e.text = txt;
 }
 
@@ -85,7 +85,7 @@ function setupQuestionAndSolution() {
     state.questionText = `Bishop on ${squareToText(state.square)}, edge squares?`;
     let question = entities.find(e => e.group === 'question');
     question.text = state.questionText;
-    question.setTarget(300 - state.questionText.length * 10, 40, 0.1);
+    question.setTarget(engine.centerx - engine.textWidth(state.questionText) / 2, 40, 0.1);
     const edges = [];
     const file = state.square % 8, rank = Math.floor(state.square / 8);
     for (let i = 1; i < 8; i++) {
@@ -101,16 +101,16 @@ function addDial(str, radius, groupName) {
     entities.push(...str
         .split('')
         .map((letter, i) => new Entity(
-            Math.cos(Math.PI * 2 / 8 * i - Math.PI / 2) * radius + 300,
-            Math.sin(Math.PI * 2 / 8 * i - Math.PI / 2) * radius + 200,
+            Math.cos(Math.PI * 2 / 8 * i - Math.PI / 2) * radius + engine.centerx,
+            Math.sin(Math.PI * 2 / 8 * i - Math.PI / 2) * radius + engine.centery,
             { type: 'DialNode', size: 20 },
             groupName,
             letter
         )));
     entities.filter(e => e.group === groupName).forEach(e => {
         e.setTarget(e.x, e.y, 0.1);
-        e.x = 300;
-        e.y = 200;
+        e.x = engine.centerx;
+        e.y = engine.centery;
     });
 }
 
@@ -161,7 +161,7 @@ function updateOnArrowLeftRight(allDialNodes) {
     let activeGroupName = ['letters', 'digits', 'ok'][selectedDial];
     let activeGroup = entities.filter(e => e.group === activeGroupName);
     allDialNodes.forEach(e => { e.ext.size = 20; e.color = engine.color[5] });
-    let i=0;
+    let i = 0;
     activeGroup.forEach(e => { e.ext.size = 22; e.color = engine.color[8 + i++] });
     moveGroupToFont(activeGroupName);
 
@@ -198,9 +198,9 @@ function updateOnNewAnswer(selectionText) {
             y: Math.sin(randomAngle)
         };
         let r = Math.random() * 600;
-        let e = new Entity(300, 200, { type: 'Circle', size: (r / 600) * 10 });
+        let e = new Entity(engine.centerx, engine.centery, { type: 'Circle', size: (r / 600) * engine.textSize / 2 });
         e.color = engine.color[Math.floor(Math.random() * 16)];
-        e.setTarget(angle.x * r + 300, angle.y * r + 200, Math.random() * 0.1 + 0.01);
+        e.setTarget(angle.x * r + engine.centerx, angle.y * r + 200, Math.random() * 0.1 + 0.01);
         e.life = r / 600 * 50;
         entities.push(e);
     }
@@ -227,7 +227,11 @@ function updateOnSubmitAnswer(selection) {
 }
 
 function updateOnEnterKey(allDialNodes) {
-    let selection = allDialNodes.filter(e => e.x > 280 && e.x < 320 && e.y > 80 && e.y < 160);
+    let w = 40;
+    let sx = engine.centerx - w / 2;
+    let sy = engine.centery - w / 2 - 100;
+
+    let selection = allDialNodes.filter(e => e.x > sx && e.x < sx + w && e.y > sy && e.y < (sy + 2 * w));
     if (state.selectedDial === 2) {
         selection.forEach(e => e.color = engine.color[11]);
     }
@@ -252,7 +256,7 @@ function renderCircle(e) {
     let y = Math.floor(e.y + ofsy);
     engine.fillCirc(x, y, entitySize, e.color);
     if (e.text) {
-        engine.text(e.text, x - 10, y + 10, engine.color[0]);
+        engine.text(e.text, x - engine.textSize / 2, y + engine.textSize / 2, engine.color[0]);
     }
 }
 
@@ -260,7 +264,7 @@ function renderLabel(e) {
     let ofs = 0;
     if (e.group === 'answer') {
         let t = ((engine.tick % 40) / 40) * 2 * Math.PI;
-        ofs = Math.cos(t) * 10;
+        ofs = Math.cos(t) * engine.textSize / 2;
     }
     engine.text(e.text, e.x + ofs, e.y, e.color);
 }
@@ -298,7 +302,7 @@ function init() {
     addDial('^', 20, 'ok');
 
     addLabel('...', 'question', 20, -40, engine.color[[7]]);
-    addLabel('', 'answer', 0, 380, engine.color[11]);
+    addLabel('', 'answer', 0, 420, engine.color[11]);
     addLabel('WELL DONE!', 'welldone', 650, 200, engine.color[2]);
 
     setupQuestionAndSolution();

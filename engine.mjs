@@ -1,18 +1,20 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-canvas.style.width = '900px';
-canvas.style.height = '600px';
-canvas.width = 600;
-canvas.height = 400;
+canvas.width = 512;
+canvas.height = 512;
 
 const fps = 30;
 const interval = 1000 / fps;
+const centerx = canvas.width / 2;
+const centery = canvas.height / 2;
+const textSize = 16;
 let lastTime = 0;
 let tick = 0;
 let game = null;
 let keysPressed = [];
 let nextScene = null;
+
 
 const color = [
     "#000000",   //  0 black
@@ -34,10 +36,14 @@ const color = [
 ];
 
 window.addEventListener('keydown', function (event) {
-    if (!keysPressed.includes(event.code)) {
-        keysPressed.push(event.code);
-    }
+    onKeyPressed(event.code);
 });
+
+function onKeyPress(code) {
+    if (!keysPressed.includes(code)) {
+        keysPressed.push(code);
+    }
+}
 
 
 function run(g) {
@@ -93,8 +99,16 @@ function fillCirc(x, y, size, color) {
     ctx.closePath();
 }
 
+function fillRect(x, y, width, height, color) {
+    ctx.beginPath();
+    ctx.rect(x, y, width, height);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.closePath();
+}
+
 function text(txt, x, y, color) {
-    ctx.font = "20px 'Press Start 2P', monospace";
+    ctx.font = `${textSize}px 'Press Start 2P', monospace`;
     ctx.fillStyle = color;
     ctx.fillText(txt, x, y);
 }
@@ -103,10 +117,17 @@ function goToScene(newScene) {
     nextScene = newScene;
 }
 
+function textWidth(txt) {
+    return txt.length * 16;
+}
+
 export {
     run,
     tick,
     color,
     keysPressed,
-    cls, pushMatrix, popMatrix, translate, fillCirc, text, goToScene
+    centerx,
+    centery,
+    textSize,
+    cls, pushMatrix, popMatrix, translate, fillCirc, text, goToScene, textWidth, fillRect, onKeyPress
 };
