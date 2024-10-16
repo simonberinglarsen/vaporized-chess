@@ -4,16 +4,16 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open('app-cache').then((cache) => {
             return cache.addAll([
-                '/',
-                '/index.html',
-                '/engine.mjs',
-                '/game.mjs',
-                '/service-worker.js',
-                '/scenes/bishop.mjs',
-                '/scenes/score.mjs',
-                '/icons/icon-192x192.png',
-                '/icons/icon-512x512.png',
-                '/fonts/PressStart2P-Regular.ttf'
+                '/vaporized-chess/',
+                '/vaporized-chess/index.html',
+                '/vaporized-chess/engine.mjs',
+                '/vaporized-chess/game.mjs',
+                '/vaporized-chess/service-worker.js',
+                '/vaporized-chess/scenes/bishop.mjs',
+                '/vaporized-chess/scenes/score.mjs',
+                '/vaporized-chess/icons/icon-192x192.png',
+                '/vaporized-chess/icons/icon-512x512.png',
+                '/vaporized-chess/fonts/PressStart2P-Regular.ttf'
             ]);
         })
     );
